@@ -1,15 +1,21 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+// One-Sentence Absurd Invention Pitch — revised entry (Neon FINAL line, typed verbatim).
+// Writes the line verbatim to entry.txt in the grader's output dir —
+// $MAKEFUN_OUTPUT_DIR first, then /output, then ./output; no trailing newline.
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const dir = dirname(fileURLToPath(import.meta.url));
-const sentence = readFileSync(join(dir, "entry.txt"), "utf8").trim();
+const LINE = `A kitchen cabinet with a miniature guillotine that executes any Tupperware tub missing its lid for 30 days, solving the avalanche problem on day 31 and leaving me eating Tuesday's chili out of a clean dustpan.`;
 
-// The gate accepts 1–220 characters of non-whitespace text; fail loudly
-// rather than writing an entry the scorer would refuse.
-if (sentence.length < 1 || sentence.length > 220) {
-  throw new Error(`entry.txt must be 1-220 characters, got ${sentence.length}`);
+const candidates = [process.env.MAKEFUN_OUTPUT_DIR, "/output", "./output"].filter(Boolean) as string[];
+let written = false;
+for (const dir of candidates) {
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "entry.txt"), LINE, "utf8");
+    written = true;
+    break;
+  } catch {
+    // Directory not writable (e.g. read-only repo dir) — try the next fallback.
+  }
 }
-
-mkdirSync("/output", { recursive: true });
-writeFileSync("/output/entry.txt", sentence, "utf8");
+if (!written) throw new Error("could not write entry.txt to any output dir");
